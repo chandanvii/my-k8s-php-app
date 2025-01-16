@@ -1,14 +1,14 @@
 # Use official PHP image
 FROM php:7.4-apache
 
-# Install any dependencies (if needed)
+# Install mysqli extension
 RUN docker-php-ext-install mysqli
 
-# Copy PHP application files into container
-COPY ./src /var/www/html/
-
-# Copy php.ini settings
+# Copy custom php.ini settings
 COPY php.ini /usr/local/etc/php/
 
-# Expose port 80 for Apache
+# Copy application files into container
+COPY ./src /var/www/html/
+
+# Expose the Apache port
 EXPOSE 80

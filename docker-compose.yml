@@ -1,9 +1,12 @@
 version: '3.7'
 services:
   php-app:
-    build: .
+    build: 
+      context: .
     ports:
-      - "8080:80"
+      - "8081:80" # Maps host port 8081 to container port 80
+    volumes:
+      - ./src:/var/www/html  # Mounts local src folder to the container's document root
     depends_on:
       - mysql
     networks:
@@ -18,6 +21,19 @@ services:
       - app-network
     volumes:
       - mysql-data:/var/lib/mysql
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    environment:
+      PMA_HOST: mysql
+      PMA_USER: root
+      PMA_PASSWORD: root
+    ports:
+      - "8082:80" # Maps host port 8082 to container port 80
+    depends_on:
+      - mysql
+    networks:
+      - app-network
 
 networks:
   app-network:
