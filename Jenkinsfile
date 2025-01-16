@@ -2,51 +2,47 @@ pipeline {
     agent any
 
     environment {
-        // Define environment variables
-        DOCKER_IMAGE = 'php-app'              // Name of your Docker image (can be customized)
-        DOCKER_TAG = 'latest'                 // Tag for your Docker image
-        REGISTRY = 'docker.io'                // Docker registry (Docker Hub)
-        REPO = 'chandanviii'                  // Your Docker Hub username (replace with 'chandanviii')
-        K8S_CONFIG = '/home/jenkins/.kube/config'  // Path to the kubeconfig file on the Jenkins server (adjust if necessary)
+        DOCKER_COMPOSE_FILE = 'docker-compose.yml'
+        DOCKER_IMAGE_TAG = 'latest'
+        DOCKERHUB_CREDENTIALS = 'dockerhub-credentials-id' // Replace with your Jenkins credential ID
+        DOCKERHUB_USERNAME = 'chandanviii' // Your Docker Hub username
+        REPO_NAME = 'chandanviii/php-app' // Your Docker Hub repository name
     }
 
     stages {
         stage('Checkout Code') {
             steps {
-                // Clone your GitHub repository
-                git 'https://github.com/chandanvii/my-k8s-php-app.git'  // Replace with your GitHub repository URL
+                checkout scm
             }
         }
 
-        stage('Build Docker Image') {
+        stage('Build and Push Docker Images') {
             steps {
                 script {
-                    // Build the Docker image
-                    docker.build("${REGISTRY}/${REPO}/${DOCKER_IMAGE}:${DOCKER_TAG}")
-                }
-            }
-        }
-
-        stage('Push Docker Image') {
-            steps {
-                script {
-                    // Push the Docker image to Docker Hub (authenticate using Jenkins credentials)
-                    docker.withRegistry('https://docker.io', 'docker-hub-credentials') {
-                        docker.image("${REGISTRY}/${REPO}/${DOCKER_IMAGE}:${DOCKER_TAG}").push()
+                    sh 'docker-compose down' // Stop existing containers if running
+                    sh 'docker-compose build' // Build Docker images
+                    
+                    docker.withRegistry('https://registry.hub.docker.com', DOCKERHUB_CREDENTIALS) {
+                        sh "docker tag php-app:latest ${DOCKERHUB_USERNAME}/${REPO_NAME}:latest"
+                        sh "docker push ${DOCKERHUB_USERNAME}/${REPO_NAME}:latest"
                     }
                 }
             }
         }
 
-        stage('Deploy to Kubernetes') {
+        stage('Deploy Services') {
             steps {
                 script {
-                    // Deploy to Kubernetes using the kubeconfig from Jenkins credentials
-                    withKubeConfig([credentialsId: 'your-kube-credentials-id']) {
-                        sh 'kubectl apply -f k8s/deployment.yml'
-                        sh 'kubectl apply -f k8s/service.yml'
-                        sh 'kubectl apply -f k8s/ingress.yml'
-                    }
+                    sh 'docker-compose up -d'
+                }
+            }
+        }
+        
+        stage('Post Deployment Testing') {
+            steps {
+                script {
+                    sh 'curl -I http://localhost:8081' // Test PHP app
+                    sh 'curl -I http://localhost:8082' // Test phpMyAdmin
                 }
             }
         }
@@ -54,10 +50,10 @@ pipeline {
 
     post {
         success {
-            echo 'Build and deployment successful!'
+            echo 'Pipeline executed successfully!'
         }
         failure {
-            echo 'Build or deployment failed!'
+            echo 'Pipeline failed. Check logs for details.'
         }
     }
 }
