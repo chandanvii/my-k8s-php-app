@@ -20,7 +20,8 @@ services:
     networks:
       - app-network
     volumes:
-      - mysql-data:/var/lib/mysql
+      - mysql-data1:/var/lib/mysql
+      - ./mydb.sql:/docker-entrypoint-initdb.d/mydb.sql
 
   phpmyadmin:
     image: phpmyadmin/phpmyadmin:latest
@@ -40,4 +41,4 @@ networks:
     driver: bridge
 
 volumes:
-  mysql-data:
+  mysql-data1:
