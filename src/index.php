@@ -5,7 +5,7 @@
     <title>Login/Register</title>
 </head>
 <body>
-    <h1>Welcome to the Login and Registration Page</h1>
+    <h1>Welcome to the Login and Registration page khushal</h1>
     <a href="login.php">Login</a> | <a href="register.php">Register</a>
 </body>
 </html>
